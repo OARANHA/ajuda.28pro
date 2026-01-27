@@ -1,26 +1,35 @@
 version: '3.8'
 
 x-traefik: &traefik
+  networks:
+    - traefik-public
   labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.28proajuda-router.rule=Host(`ajuda.28pro.com.br`)"
-    - "traefik.http.routers.28proajuda-router.entrypoints=websecure"
-    - "traefik.http.routers.28proajuda-router.tls.certresolver=letsencrypt"
+    - "traefik.http.routers.28proajuda-http.rule=Host(`ajuda.28pro.com.br`)"
+    - "traefik.http.routers.28proajuda-http.entrypoints=web"
+    - "traefik.http.routers.28proajuda-http.middlewares=redirect-https"
+    - "traefik.http.routers.28proajuda-https.rule=Host(`ajuda.28pro.com.br`)"
+    - "traefik.http.routers.28proajuda-https.entrypoints=websecure"
+    - "traefik.http.routers.28proajuda-https.tls.certresolver=letsencrypt"
     - "traefik.http.services.28proajuda-service.loadbalancer.server.port=80"
+    - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+    - "traefik.http.middlewares.28proajuda-headers.headers.stripprefix.prefixes=/api"
+    - "traefik.http.routers.28proajuda-api.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
+    - "traefik.http.routers.28proajuda-api.middlewares=28proajuda-headers"
 
 services:
   postgres:
     image: postgres:15-alpine
     container_name: 28proajuda-postgres
     environment:
-      POSTGRES_DB: erpkb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: senhasegura123
+      POSTGRES_DB: ${POSTGRES_DB:-erpkb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,29 +37,45 @@ services:
       - erp_network
     restart: unless-stopped
 
-  api:
-    build: .
-    container_name: 28proajuda-api
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://postgres:senhasegura123@postgres:5432/erpkb
-      GROQ_API_KEY: sk-groq-key-aqui
+  redis:
+    image: redis:7-alpine
+    container_name: 28proajuda-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
-      - ./api.js:/app/api.js
+      - redis_data:/data
+    networks:
+      - erp_network
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: 28proajuda-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-erpkb}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    volumes:
+      - ./api.js:/app/api.js:ro
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     <<: *traefik
     networks:
       - erp_network
-      - proxy_network
+      - traefik-public
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   erp_network:
     driver: bridge
-  proxy_network:
+  traefik-public:
     external: true
