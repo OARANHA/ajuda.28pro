@@ -5,11 +5,11 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# Copiar apenas package.json (sem lockfile inexistente)
-COPY package.json .
+# Copiar package.json e package-lock.json
+COPY package*.json .
 
-# Instalar dependências sem flags problemáticas
-RUN npm ci --omit=dev
+# Instalar dependências de produção (compatível com todas versões do npm)
+RUN npm install --production --no-audit --no-fund
 
 # Copiar código fonte
 COPY api.js .
