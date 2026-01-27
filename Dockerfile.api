@@ -1,25 +1,33 @@
 FROM node:20-alpine AS builder
 
+# Instalar ferramentas de build NECESSÁRIAS para compilar dependências nativas
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
-# Cache deps
-COPY package*.json .
-RUN npm install --only=production --no-optional && npm cache clean --force
+# Copiar apenas package.json (sem lockfile inexistente)
+COPY package.json .
 
-# Copy source
+# Instalar dependências sem flags problemáticas
+RUN npm ci --omit=dev
+
+# Copiar código fonte
 COPY api.js .
 
 # Production stage
 FROM node:20-alpine
 
+# Instalar wget para o healthcheck
+RUN apk add --no-cache wget
+
 WORKDIR /app
 
-# Copy from builder
+# Copiar da builder stage
 COPY --from=builder /app /app
 
-# Non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S 28proajuda -u 1001
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S 28proajuda -u 1001
 USER 28proajuda
 
 EXPOSE 3000

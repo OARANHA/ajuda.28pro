@@ -18,6 +18,3 @@
     "node": ">=20.0.0"
   }
 }
-
-# Instalar: docker compose exec api npm ci
-# Rode: docker compose exec api npm start
