@@ -3,6 +3,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const { Groq } = require('groq-sdk');
 const Redis = require('ioredis');
+const migrate = require('./migrate');
 
 const app = express();
 app.use(cors());
@@ -91,4 +92,21 @@ app.post('/api/ask', async (req, res) => {
   });
 });
 
-app.listen(3000, () => console.log('28ProAjuda API:3000'));
+app.post('/api/migrate', async (req, res) => {
+  try {
+    await migrate(pool);
+    res.json({ success: true, message: 'Migração executada com sucesso' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+(async () => {
+  try {
+    await migrate(pool);
+    app.listen(3000, () => console.log('28ProAjuda API:3000'));
+  } catch (err) {
+    console.error('[Startup] Erro ao iniciar API:', err);
+    process.exit(1);
+  }
+})();
