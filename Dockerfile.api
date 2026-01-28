@@ -1,38 +1,15 @@
-FROM node:20-alpine AS builder
-
-# Instalar ferramentas de build NECESSÁRIAS para compilar dependências nativas
-RUN apk add --no-cache python3 make g++
-
-WORKDIR /app
-
-# Copiar package.json e package-lock.json
-COPY package*.json .
-
-# Instalar dependências de produção (compatível com todas versões do npm)
-RUN npm install --production --no-audit --no-fund
-
-# Copiar código fonte
-COPY api.js .
-
-# Copiar scraper
-COPY scraper.js .
-
-# Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar package.json, package-lock.json e init.sql
-COPY package*.json init.sql .
+# Copiar package.json e dependencies
+COPY package*.json .
 
-# Instalar dependências de produção (compatível com todas versões do npm)
-RUN npm install --production --no-audit --no-fund
+# Instalar dependencies
+RUN npm install --production
 
 # Copiar código fonte
-COPY api.js .
-
-# Copiar scraper
-COPY scraper.js .
+COPY api.js scraper.js .
 
 # Criar usuário não-root
 RUN addgroup -g 1001 -S nodejs && \
