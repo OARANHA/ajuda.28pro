@@ -38,6 +38,23 @@ app.get('/api/articles/exists', async (req, res) => {
   }
 });
 
+// Busca de artigos
+app.get('/api/articles', async (req, res) => {
+  try {
+    console.log('[DEBUG] GET /api/articles - Requisição recebida');
+    const result = await pool.query(
+      `SELECT *, ts_rank(to_tsvector('portuguese', COALESCE(title||' '||content, '')), plainto_tsquery('portuguese', $1)) AS rank
+      FROM articles WHERE to_tsvector('portuguese', COALESCE(title||' '||content, '')) @@ plainto_tsquery('portuguese', $1)
+      ORDER BY rank DESC LIMIT 10`
+    );
+    console.log(`[DEBUG] GET /api/articles - ${result.rows.length} artigos encontrados`);
+    res.json({ results: result.rows });
+  } catch (err) {
+    console.error('[DEBUG] Erro em GET /api/articles:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Busca FTS
 app.post('/api/search', async (req, res) => {
   const { query, limit = 5 } = req.body;
