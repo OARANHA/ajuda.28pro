@@ -105,24 +105,27 @@ function App() {
             </div>
           </header>
 
-          <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-              <div 
-                className="article-content"
-                dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
-              />
-              <style>{`
-                .article-content h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
-                .article-content h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem; color: #334155; }
-                .article-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; color: #475569; }
-                .article-content p { margin-bottom: 1.25rem; line-height: 1.8; color: #64748b; }
-                .article-content ul { margin-bottom: 1.25rem; padding-left: 1.75rem; }
-                .article-content li { margin-bottom: 0.75rem; line-height: 1.7; }
-                .article-content a { color: #2563eb; text-decoration: none; font-weight: 500; transition: color 0.2s; }
-                .article-content a:hover { color: #1d4ed8; text-decoration: underline; }
-                .article-content img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-                .article-content strong { font-weight: 600; color: #1e293b; }
-              `}</style>
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-4 py-8 w-full">
+              <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+                <div 
+                  className="article-content"
+                  dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+                />
+                <style>{`
+                  .article-content { min-height: calc(100vh - 150px); }
+                  .article-content h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
+                  .article-content h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem; color: #334155; }
+                  .article-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; color: #475569; }
+                  .article-content p { margin-bottom: 1.25rem; line-height: 1.8; color: #64748b; }
+                  .article-content ul { margin-bottom: 1.25rem; padding-left: 1.75rem; }
+                  .article-content li { margin-bottom: 0.75rem; line-height: 1.7; }
+                  .article-content a { color: #2563eb; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+                  .article-content a:hover { color: #1d4ed8; text-decoration: underline; }
+                  .article-content img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+                  .article-content strong { font-weight: 600; color: #1e293b; }
+                `}</style>
+              </div>
             </div>
           </main>
         </div>
