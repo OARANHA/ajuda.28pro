@@ -8,8 +8,6 @@ services:
     container_name: 28proajuda-frontend
     environment:
       REACT_APP_API_URL: https://ajuda.28pro.com.br/api
-    ports:
-      - "80:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
