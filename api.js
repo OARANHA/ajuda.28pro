@@ -77,18 +77,31 @@ app.get('/api/categories', async (req, res) => {
     console.error('[DEBUG] Erro em GET /api/categories:', err);
     res.status(500).json({ error: err.message });
   }
-});
+  });
 
 // Busca FTS
-app.post('/api/search', async (req, res) => {
-  const { query, limit = 5 } = req.body;
-  const result = await pool.query(
-    `SELECT *, ts_rank(to_tsvector('portuguese', COALESCE(title||' '||content, '')), plainto_tsquery('portuguese', $1)) AS rank
-     FROM articles WHERE to_tsvector('portuguese', COALESCE(title||' '||content, '')) @@ plainto_tsquery('portuguese', $1)
-     ORDER BY rank DESC LIMIT $2`,
-    [query, limit]
-  );
-  res.json({ results: result.rows });
+app.get('/api/search', async (req, res) => {
+  const { q, limit = 5 } = req.query;
+  
+  if (!q) {
+    return res.json({ results: [] });
+  }
+  
+  try {
+    console.log('[DEBUG] GET /api/search - Query:', q);
+    const result = await pool.query(
+      `SELECT *, ts_rank(to_tsvector('portuguese', COALESCE(title||' '||content, '')), plainto_tsquery('portuguese', $1)) AS rank
+      FROM articles 
+      WHERE to_tsvector('portuguese', COALESCE(title||' '||content, '')) @@ plainto_tsquery('portuguese', $1)
+      ORDER BY rank DESC LIMIT $2`,
+      [q, limit]
+    );
+    console.log(`[DEBUG] GET /api/search - ${result.rows.length} resultados encontrados`);
+    res.json({ results: result.rows });
+  } catch (err) {
+    console.error('[DEBUG] Erro em GET /api/search:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // RAG Groq
