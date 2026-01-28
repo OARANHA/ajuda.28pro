@@ -18,6 +18,15 @@ services:
       - erp_network
       - traefik-public
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.28proajuda-frontend-http.rule=Host(`ajuda.28pro.com.br`)"
+      - "traefik.http.routers.28proajuda-frontend-http.entrypoints=web"
+      - "traefik.http.routers.28proajuda-frontend-http.middlewares=redirect-https"
+      - "traefik.http.routers.28proajuda-frontend-https.rule=Host(`ajuda.28pro.com.br`)"
+      - "traefik.http.routers.28proajuda-frontend-https.entrypoints=websecure"
+      - "traefik.http.routers.28proajuda-frontend-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.28proajuda-frontend-service.loadbalancer.server.port=80"
 
   postgres:
     image: postgres:15-alpine
