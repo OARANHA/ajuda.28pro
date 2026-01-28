@@ -41,9 +41,6 @@ USER 28proajuda
 
 EXPOSE 3000
 
-# Instalar curl para healthcheck
-RUN apk add --no-cache curl
-
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
