@@ -68,9 +68,9 @@ app.get('/api/categories', async (req, res) => {
   try {
     console.log('[DEBUG] GET /api/categories - Requisição recebida');
     const result = await pool.query(
-      'SELECT DISTINCT category FROM articles ORDER BY category ASC'
+      'SELECT category, COUNT(*) as count FROM articles GROUP BY category ORDER BY category ASC'
     );
-    const categories = result.rows.map(row => row.category);
+    const categories = result.rows.map(row => ({ name: row.category, count: parseInt(row.count) }));
     console.log(`[DEBUG] GET /api/categories - ${categories.length} categorias encontradas`);
     res.json({ categories });
   } catch (err) {
