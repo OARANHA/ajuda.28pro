@@ -39,17 +39,25 @@ app.get('/api/articles/exists', async (req, res) => {
   }
 });
 
-// Busca de artigos
 app.get('/api/articles', async (req, res) => {
   try {
     console.log('[DEBUG] GET /api/articles - Requisição recebida');
-    const result = await pool.query(
-      `SELECT *, ts_rank(to_tsvector('portuguese', COALESCE(title||' '||content, '')), plainto_tsquery('portuguese', $1)) AS rank
-      FROM articles WHERE to_tsvector('portuguese', COALESCE(title||' '||content, '')) @@ plainto_tsquery('portuguese', $1)
-      ORDER BY rank DESC LIMIT 10`
-    );
+    const { category, limit = 50 } = req.query;
+    
+    let query = 'SELECT * FROM articles WHERE true';
+    const params = [];
+    
+    if (category) {
+      params.push(category);
+      query += ' AND category = $' + params.length;
+    }
+    
+    params.push(limit);
+    query += ' ORDER BY updated_at DESC LIMIT $' + params.length;
+    
+    const result = await pool.query(query, params);
     console.log(`[DEBUG] GET /api/articles - ${result.rows.length} artigos encontrados`);
-    res.json({ results: result.rows });
+    res.json({ results: result.rows, total: result.rowCount });
   } catch (err) {
     console.error('[DEBUG] Erro em GET /api/articles:', err);
     res.status(500).json({ error: err.message });

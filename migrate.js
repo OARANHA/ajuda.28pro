@@ -29,7 +29,7 @@ async function migrate(pool) {
         content TEXT,
         keywords TEXT[],
         difficulty VARCHAR(50),
-        url VARCHAR(1000),
+        url VARCHAR(1000) UNIQUE,
         scraped_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
