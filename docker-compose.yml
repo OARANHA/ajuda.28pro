@@ -1,32 +1,5 @@
 version: '3.8'
 
-x-traefik-frontend: &traefik-frontend
-  networks:
-    - traefik-public
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.28proajuda-frontend-http.rule=Host(`ajuda.28pro.com.br`)"
-    - "traefik.http.routers.28proajuda-frontend-http.entrypoints=web"
-    - "traefik.http.routers.28proajuda-frontend-http.middlewares=redirect-https"
-    - "traefik.http.routers.28proajuda-frontend-https.rule=Host(`ajuda.28pro.com.br`)"
-    - "traefik.http.routers.28proajuda-frontend-https.entrypoints=websecure"
-    - "traefik.http.routers.28proajuda-frontend-https.tls.certresolver=letsencrypt"
-    - "traefik.http.services.28proajuda-frontend-service.loadbalancer.server.port=80"
-    - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-
-x-traefik-api: &traefik-api
-  networks:
-    - traefik-public
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.28proajuda-api-http.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
-    - "traefik.http.routers.28proajuda-api-http.entrypoints=web"
-    - "traefik.http.routers.28proajuda-api-http.middlewares=redirect-https"
-    - "traefik.http.routers.28proajuda-api-https.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
-    - "traefik.http.routers.28proajuda-api-https.entrypoints=websecure"
-    - "traefik.http.routers.28proajuda-api-https.tls.certresolver=letsencrypt"
-    - "traefik.http.services.28proajuda-api-service.loadbalancer.server.port=3000"
-
 services:
   frontend:
     build:
@@ -41,7 +14,6 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 5
-    <<: *traefik-frontend
     networks:
       - erp_network
       - traefik-public
@@ -96,7 +68,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    <<: *traefik-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.28proajuda-api-http.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.28proajuda-api-http.entrypoints=web"
+      - "traefik.http.routers.28proajuda-api-http.middlewares=redirect-https"
+      - "traefik.http.routers.28proajuda-api-https.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.28proajuda-api-https.entrypoints=websecure"
+      - "traefik.http.routers.28proajuda-api-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.28proajuda-api-service.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
     networks:
       - erp_network
       - traefik-public
