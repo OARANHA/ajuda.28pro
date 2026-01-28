@@ -62,8 +62,6 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-erpkb}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       GROQ_API_KEY: ${GROQ_API_KEY}
-    volumes:
-      - ./api.js:/app/api.js:ro
     depends_on:
       postgres:
         condition: service_healthy
