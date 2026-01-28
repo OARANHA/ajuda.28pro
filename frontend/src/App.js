@@ -36,7 +36,7 @@ function App() {
       const params = {};
       if (category) params.category = category;
       if (search) params.q = search;
-      
+
       const response = await axios.get(`${API_URL}/articles`, { params });
       setArticles(response.data.articles || []);
     } catch (error) {
@@ -67,7 +67,7 @@ function App() {
 
   if (selectedArticle) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex">
         {/* Sidebar */}
         <Sidebar
           categories={categories}
@@ -94,8 +94,8 @@ function App() {
                 <ArrowLeft size={20} />
                 <span className="font-medium">Voltar</span>
               </button>
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">{selectedArticle.title}</h1>
+              <div className="flex items-center gap-3 flex-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{selectedArticle.title}</h1>
                 {selectedArticle.category && (
                   <span className="inline-flex items-center px-3 py-1 text-sm bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full ml-3 shadow-sm">
                     {selectedArticle.category}
@@ -108,7 +108,7 @@ function App() {
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 py-8 w-full">
               <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-                <div 
+                <div
                   className="article-content"
                   dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
                 />
@@ -137,7 +137,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex">
       {/* Sidebar */}
       <Sidebar
         categories={categories}
@@ -160,10 +160,10 @@ function App() {
             </button>
 
             <div className="flex items-center gap-3 flex-1">
-              <img 
-                src="/logo.png" 
-                alt="28ProAjuda Logo" 
-                className="h-12 w-auto rounded-xl shadow-lg"
+              <img
+                src="/logo.png"
+                alt="28ProAjuda Logo"
+                className="h-12 w-auto"
               />
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">28ProAjuda</h1>

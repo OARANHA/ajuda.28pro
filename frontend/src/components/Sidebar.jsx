@@ -15,7 +15,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, isOpen, onClo
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:sticky top-0 left-0 h-screen w-80 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200/50 z-30
+          fixed lg:sticky top-0 left-0 h-screen w-80 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200/50 z-5
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
