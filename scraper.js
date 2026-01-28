@@ -5,6 +5,33 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
+async function cleanContent(content, categorySlug) {
+  if (!content) return content;
+  
+  let cleaned = content;
+  
+  cleaned = cleaned.replace(/https:\/\/aprendaerp\.gitbook\.io\//g, '/');
+  cleaned = cleaned.replace(/https:\/\/ajuda\.aprendaerp\.com\.br\//g, '/');
+  cleaned = cleaned.replace(/http:\/\/ajuda\.aprendaerp\.com\.br\//g, '/');
+  
+  const links = cleaned.match(/href=["']([^"']+)["']/g);
+  if (links) {
+    links.forEach(link => {
+      const urlMatch = link.match(/href=["']([^"']+)["']/);
+      if (urlMatch) {
+        let url = urlMatch[1];
+        if (url.startsWith('/') && !url.startsWith('//')) {
+          const relativePath = url.substring(1);
+          const newPath = `/${categorySlug}/${relativePath}`;
+          cleaned = cleaned.replace(url, `/${newPath}`);
+        }
+      }
+    });
+  }
+  
+  return cleaned;
+}
+
 async function scrape() {
   const dbId = '6769d09365797380ed48483f';
   const centralSlug = 'aprenda-erp';
@@ -41,17 +68,21 @@ async function scrape() {
             `${apiBaseUrl}/section/${cat.slug}/doc/${doc.slug}`
           );
 
+          const content = articleData.conteudoHtml || articleData.conteudo;
+          const cleanedContent = await cleanContent(content, cat.slug);
+          const articleUrl = `https://ajuda.28pro.com.br/${cat.slug}/${doc.slug}`;
+
           await pool.query(
             `INSERT INTO articles (title, category, content, description, url) 
-             VALUES ($1, $2, $3, $4, $5) 
-             ON CONFLICT (url) DO UPDATE 
-             SET content = $3, description = $4`,
+               VALUES ($1, $2, $3, $4, $5) 
+               ON CONFLICT (url) DO UPDATE 
+               SET content = $3, description = $4`,
             [
               articleData.titulo,
               cat.nome,
-              articleData.conteudoHtml || articleData.conteudo,
+              cleanedContent,
               articleData.conteudo ? articleData.conteudo.substring(0, 500) : '',
-              `https://ajuda.aprendaerp.com.br/${cat.slug}/${doc.slug}`
+              articleUrl
             ]
           );
 
