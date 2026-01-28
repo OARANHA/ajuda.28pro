@@ -5,16 +5,16 @@ x-traefik: &traefik
     - traefik-public
   labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.28proajuda-http.rule=Host(`ajuda.28pro.com.br`)"
+    - "traefik.http.routers.28proajuda-http.rule=Host(`ajuda.28facil.com.br`)"
     - "traefik.http.routers.28proajuda-http.entrypoints=web"
     - "traefik.http.routers.28proajuda-http.middlewares=redirect-https"
-    - "traefik.http.routers.28proajuda-https.rule=Host(`ajuda.28pro.com.br`)"
+    - "traefik.http.routers.28proajuda-https.rule=Host(`ajuda.28facil.com.br`)"
     - "traefik.http.routers.28proajuda-https.entrypoints=websecure"
     - "traefik.http.routers.28proajuda-https.tls.certresolver=letsencrypt"
-    - "traefik.http.services.28proajuda-service.loadbalancer.server.port=80"
+    - "traefik.http.services.28proajuda-service.loadbalancer.server.port=3000"
     - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
     - "traefik.http.middlewares.28proajuda-headers.headers.stripprefix.prefixes=/api"
-    - "traefik.http.routers.28proajuda-api.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
+    - "traefik.http.routers.28proajuda-api.rule=Host(`ajuda.28facil.com.br`) && PathPrefix(`/api`)"
     - "traefik.http.routers.28proajuda-api.middlewares=28proajuda-headers"
 
 services:
