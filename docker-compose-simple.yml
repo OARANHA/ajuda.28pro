@@ -18,7 +18,6 @@ services:
       retries: 5
     networks:
       - erp_network
-      - traefik-public
     restart: unless-stopped
 
   postgres:
@@ -70,19 +69,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.28proajuda-api-http.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.28proajuda-api-http.entrypoints=web"
-      - "traefik.http.routers.28proajuda-api-http.middlewares=redirect-https"
-      - "traefik.http.routers.28proajuda-api-https.rule=Host(`ajuda.28pro.com.br`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.28proajuda-api-https.entrypoints=websecure"
-      - "traefik.http.routers.28proajuda-api-https.tls.certresolver=letsencrypt"
-      - "traefik.http.services.28proajuda-api-service.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+    ports:
+      - "3000:3000"
     networks:
       - erp_network
-      - traefik-public
     restart: unless-stopped
 
 volumes:
@@ -92,5 +82,3 @@ volumes:
 networks:
   erp_network:
     driver: bridge
-  traefik-public:
-    external: true
