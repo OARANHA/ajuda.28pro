@@ -1,5 +1,4 @@
 const axios = require('axios');
-const cheerio = require('cheerio');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -7,62 +6,68 @@ const pool = new Pool({
 });
 
 async function scrape() {
-  const baseUrl = 'https://ajuda.aprendaerp.com.br';
-  console.log('Iniciando scraper em:', baseUrl);
+  const dbId = '6769d09365797380ed48483f';
+  const centralSlug = 'aprenda-erp';
+  const apiBaseUrl = `https://ajuda.aprendaerp.com.br/backend/api/public/docs/${dbId}`;
+  
+  console.log('Iniciando scraper via API de:', centralSlug);
 
   try {
-    const { data } = await axios.get(baseUrl);
-    const $ = cheerio.load(data);
+    console.log('Buscando estrutura de categorias...');
+    const { data: categories } = await axios.get(`${apiBaseUrl}/central/${centralSlug}`);
     
-    const categories = [];
-    $('button.category-btn, .sidebar-menu a, .menu-item a').each((i, el) => {
-        const name = $(el).text().replace(/\d+$/, '').trim();
-        let href = $(el).attr('href');
-        if (href && !href.startsWith('http')) href = baseUrl + href;
-        if (href && href.includes(baseUrl) && name) {
-            categories.push({ name, url: href });
-        }
-    });
-
     console.log(`Encontradas ${categories.length} categorias.`);
+    
+    let totalDocuments = 0;
+    let totalProcessed = 0;
 
     for (const cat of categories) {
-        console.log(`Scraping categoria: ${cat.name}`);
+      console.log(`\nCategoria: ${cat.nome} (${cat.slug})`);
+      
+      if (!cat.documentos || cat.documentos.length === 0) {
+        console.log('  Nenhum documento encontrado nesta categoria.');
+        continue;
+      }
+
+      console.log(`  ${cat.documentos.length} documentos encontrados.`);
+      totalDocuments += cat.documentos.length;
+
+      for (const doc of cat.documentos) {
+        console.log(`  Processando: ${doc.titulo}`);
+        totalProcessed++;
+
         try {
-            const { data: catData } = await axios.get(cat.url);
-            const $cat = cheerio.load(catData);
-            
-            const articles = [];
-            $cat('a.article-link, .article-list a, .list-group-item a').each((i, el) => {
-                const title = $(el).text().trim();
-                let url = $(el).attr('href');
-                if (url && !url.startsWith('http')) url = baseUrl + url;
-                if (url && url.includes(baseUrl)) {
-                    articles.push({ title, url });
-                }
-            });
+          const { data: articleData } = await axios.get(
+            `${apiBaseUrl}/section/${cat.slug}/doc/${doc.slug}`
+          );
 
-            for (const art of articles) {
-                console.log(`  Lendo artigo: ${art.title}`);
-                try {
-                    const { data: artData } = await axios.get(art.url);
-                    const $art = cheerio.load(artData);
-                    const content = $art('.article-content, .content, #root').html() || '';
-                    const textContent = $art('.article-content, .content, #root').text().trim();
+          await pool.query(
+            `INSERT INTO articles (title, category, content, description, url) 
+             VALUES ($1, $2, $3, $4, $5) 
+             ON CONFLICT (url) DO UPDATE 
+             SET content = $3, description = $4`,
+            [
+              articleData.titulo,
+              cat.nome,
+              articleData.conteudoHtml || articleData.conteudo,
+              articleData.conteudo ? articleData.conteudo.substring(0, 500) : '',
+              `https://ajuda.aprendaerp.com.br/${cat.slug}/${doc.slug}`
+            ]
+          );
 
-                    await pool.query(
-                        'INSERT INTO articles (title, category, content, description, url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO UPDATE SET content = $3, description = $4',
-                        [art.title, cat.name, content, textContent.substring(0, 500), art.url]
-                    );
-                } catch (e) {
-                    console.error(`Erro ao processar artigo ${art.url}:`, e.message);
-                }
-            }
+          console.log(`    ✓ Salvo com sucesso`);
         } catch (e) {
-            console.error(`Erro ao processar categoria ${cat.url}:`, e.message);
+          console.error(`    ✗ Erro ao processar documento ${doc.slug}:`, e.message);
         }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
-    console.log('Scraping finalizado com sucesso.');
+
+    console.log(`\n=== Scrapping finalizado ===`);
+    console.log(`Total de categorias: ${categories.length}`);
+    console.log(`Total de documentos: ${totalDocuments}`);
+    console.log(`Total processados: ${totalProcessed}`);
   } catch (err) {
     console.error('Erro no scraper:', err.message);
   } finally {
