@@ -57,9 +57,24 @@ app.get('/api/articles', async (req, res) => {
     
     const result = await pool.query(query, params);
     console.log(`[DEBUG] GET /api/articles - ${result.rows.length} artigos encontrados`);
-    res.json({ results: result.rows, total: result.rowCount });
+    res.json({ articles: result.rows, total: result.rowCount });
   } catch (err) {
     console.error('[DEBUG] Erro em GET /api/articles:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/categories', async (req, res) => {
+  try {
+    console.log('[DEBUG] GET /api/categories - Requisição recebida');
+    const result = await pool.query(
+      'SELECT DISTINCT category FROM articles ORDER BY category ASC'
+    );
+    const categories = result.rows.map(row => row.category);
+    console.log(`[DEBUG] GET /api/categories - ${categories.length} categorias encontradas`);
+    res.json({ categories });
+  } catch (err) {
+    console.error('[DEBUG] Erro em GET /api/categories:', err);
     res.status(500).json({ error: err.message });
   }
 });
