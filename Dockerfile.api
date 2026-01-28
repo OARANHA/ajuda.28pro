@@ -35,9 +35,8 @@ USER 28proajuda
 
 EXPOSE 3000
 
-# Verificar se a tabela articles existe antes de iniciar
-RUN apk add --no-cache curl && \
-    echo "SELECT tablename FROM pg_tables WHERE tablename = 'articles'" | xargs psql -c "conninfo" -A -t | grep -q articles && echo "Tabela existe" || echo "Tabela NAO existe"
+# Instalar curl para healthcheck
+RUN apk add --no-cache curl
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:3000/api/health || exit 1
