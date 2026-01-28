@@ -9,7 +9,7 @@ COPY package*.json .
 RUN npm install --production
 
 # Copiar código fonte
-COPY api.js scraper.js .
+COPY api.js scraper.js migrate.js .
 
 # Criar usuário não-root
 RUN addgroup -g 1001 -S nodejs && \
