@@ -3,6 +3,8 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- Tabela articles (scraping ajuda.aprendaerp.com.br)
+DROP TABLE IF EXISTS articles CASCADE;
+
 CREATE TABLE IF NOT EXISTS articles (
   id SERIAL PRIMARY KEY,
   title VARCHAR(500) NOT NULL,
@@ -13,8 +15,8 @@ CREATE TABLE IF NOT EXISTS articles (
   keywords TEXT[],
   difficulty VARCHAR(50),
   url VARCHAR(1000),
-  scraped_at TIMESTAMP DEFAULT NOW,
-  updated_at TIMESTAMP DEFAULT NOW
+  scraped_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Índices GIN para RAG
@@ -28,7 +30,7 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'pgsql';
 
 CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

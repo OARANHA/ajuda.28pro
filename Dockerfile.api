@@ -17,13 +17,16 @@ COPY api.js .
 # Production stage
 FROM node:20-alpine
 
-# Instalar wget para o healthcheck
-RUN apk add --no-cache wget
-
 WORKDIR /app
 
-# Copiar da builder stage
-COPY --from=builder /app /app
+# Copiar package.json, package-lock.json e init.sql
+COPY package*.json init.sql .
+
+# Instalar dependências de produção (compatível com todas versões do npm)
+RUN npm install --production --no-audit --no-fund
+
+# Copiar código fonte
+COPY api.js .
 
 # Criar usuário não-root
 RUN addgroup -g 1001 -S nodejs && \
@@ -32,8 +35,12 @@ USER 28proajuda
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+# Verificar se a tabela articles existe antes de iniciar
+RUN apk add --no-cache curl && \
+    echo "SELECT tablename FROM pg_tables WHERE tablename = 'articles'" | xargs psql -c "conninfo" -A -t | grep -q articles && echo "Tabela existe" || echo "Tabela NAO existe"
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=5 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["node", "api.js"]
 

@@ -22,6 +22,22 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Verificação da tabela articles
+app.get('/api/articles/exists', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'articles'
+      )`
+    );
+    res.json({ exists: result.rows[0].exists });
+  } catch (err) {
+    console.error('Erro ao verificar tabela articles:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Busca FTS
 app.post('/api/search', async (req, res) => {
   const { query, limit = 5 } = req.body;
