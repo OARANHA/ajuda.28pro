@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, FileText } from 'lucide-react';
 
-const ArticleList = ({ articles, loading, onSelectArticle }) => {
+const ArticleList = ({ articles, loading, onSelectArticle, highlightQuery = '' }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -23,6 +23,13 @@ const ArticleList = ({ articles, loading, onSelectArticle }) => {
     );
   }
 
+  const highlightText = (text, query) => {
+    if (!query) return text;
+    
+    const regex = new RegExp(`(${query.split(' ').join('|')})`, 'gi');
+    return text.replace(regex, match => `<mark class="bg-yellow-200 rounded px-1">${match}</mark>`);
+  };
+
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {articles.map((article) => (
@@ -38,8 +45,8 @@ const ArticleList = ({ articles, loading, onSelectArticle }) => {
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-700 transition-colors line-clamp-2">
-                {article.title}
+              <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-700 transition-colors">
+                {highlightQuery ? highlightText(article.title, highlightQuery) : article.title}
               </h3>
             </div>
             <ArrowRight size={20} className="text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
@@ -55,7 +62,8 @@ const ArticleList = ({ articles, loading, onSelectArticle }) => {
           
           {article.description && (
             <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-              {article.description.substring(0, 250)}...
+              {highlightQuery ? highlightText(article.description, highlightQuery) : article.description.substring(0, 250)}
+              ...
             </p>
           )}
         </div>

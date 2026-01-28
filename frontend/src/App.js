@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Search, Menu, X, ArrowLeft, BookOpen } from 'lucide-react';
+import { Search, Menu, X, ArrowLeft, BookOpen, Sparkles, XCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ArticleList from './components/ArticleList';
 import ChatIA from './components/ChatIA';
@@ -11,8 +11,11 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || 'https://ajuda.28pro.com.br/api';
 
@@ -46,15 +49,61 @@ function App() {
     }
   };
 
+  const fetchSuggestions = async (query) => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/search`, { params: { q: query, limit: 5 } });
+      setSuggestions(response.data.results || []);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Erro ao buscar sugestões:', error);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchQuery) {
+        fetchSuggestions(searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchArticles(selectedCategory, searchQuery);
+    
+    if (!searchQuery.trim()) {
+      return;
+    }
+    
+    setSearching(true);
+    fetchArticles(selectedCategory, searchQuery)
+      .finally(() => {
+        setSearching(false);
+        setShowSuggestions(false);
+      });
+  };
+
+  const handleSuggestionClick = (article) => {
+    setSearchQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setSelectedArticle(article);
   };
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     setSelectedArticle(null);
-    fetchArticles(category, searchQuery);
+    setSearchQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    fetchArticles(category);
   };
 
   const handleArticleSelect = (article) => {
@@ -63,6 +112,16 @@ function App() {
 
   const handleBack = () => {
     setSelectedArticle(null);
+    setSearchQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const highlightText = (text, query) => {
+    if (!query) return text;
+    
+    const regex = new RegExp(`(${query.split(' ').join('|')})`, 'gi');
+    return text.replace(regex, match => `<mark class="bg-yellow-200 rounded px-1">${match}</mark>`);
   };
 
   if (selectedArticle) {
@@ -94,8 +153,8 @@ function App() {
                 <ArrowLeft size={20} />
                 <span className="font-medium">Voltar</span>
               </button>
-              <div className="flex items-center gap-3 flex-1">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{selectedArticle.title}</h1>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900">{selectedArticle.title}</h1>
                 {selectedArticle.category && (
                   <span className="inline-flex items-center px-3 py-1 text-sm bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full ml-3 shadow-sm">
                     {selectedArticle.category}
@@ -114,6 +173,7 @@ function App() {
                 />
                 <style>{`
                   .article-content { min-height: calc(100vh - 150px); }
+                  .article-content mark { background-color: #fef08a; padding: 0.125rem 0.25rem; border-radius: 0.25rem; }
                   .article-content h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b; }
                   .article-content h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem; color: #334155; }
                   .article-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; color: #475569; }
@@ -171,20 +231,83 @@ function App() {
               </div>
             </div>
 
-            <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-              <div className="relative">
+            <form onSubmit={handleSearch} className="relative flex-1 max-w-2xl">
+              <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar documentação..."
-                  className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 shadow-sm"
+                  placeholder="Buscar artigos, tutoriais..."
+                  autoFocus={selectedArticle === null}
+                  className={`w-full pl-12 pr-10 py-3 bg-white border-2 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 shadow-sm ${searching ? 'ring-2 ring-blue-500' : ''}`}
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSuggestions([]);
+                      setShowSuggestions(false);
+                    }}
+                    className="absolute right-10 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <XCircle size={18} className="text-gray-400" />
+                  </button>
+                )}
               </div>
+              <button
+                type="submit"
+                disabled={!searchQuery.trim()}
+                className="absolute right-2 top-1/2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Sparkles size={20} />
+              </button>
             </form>
           </div>
         </header>
+
+        {/* Search Suggestions */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="fixed top-20 left-1/2 right-1/2 z-50 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200">
+            <div className="p-3 border-b border-gray-200">
+              <p className="text-sm text-gray-500 font-medium">Sugestões</p>
+              <button
+                onClick={() => setShowSuggestions(false)}
+                className="absolute top-3 right-3 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto p-2">
+              {suggestions.map((article, index) => (
+                <button
+                  key={article.id}
+                  onClick={() => handleSuggestionClick(article)}
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded-lg transition-colors flex items-start gap-3 group"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-sm">
+                      {article.title.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 text-sm group-hover:text-blue-700">
+                      {article.title}
+                    </h4>
+                    {article.category && (
+                      <span className="text-xs text-gray-500 ml-2">{article.category}</span>
+                    )}
+                  </div>
+                  <ArrowLeft size={16} className="text-gray-400" />
+                </button>
+              ))}
+            </div>
+            <div className="p-2 bg-gray-50 text-center text-xs text-gray-500">
+              Pressione <kbd className="bg-gray-200 px-1.5 py-0.5 rounded font-mono">Enter</kbd> para buscar
+            </div>
+          </div>
+        )}
 
         {/* Articles */}
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
@@ -205,6 +328,7 @@ function App() {
             <ArticleList
               articles={articles}
               onSelectArticle={handleArticleSelect}
+              highlightQuery={searchQuery}
             />
           )}
         </main>
