@@ -94,7 +94,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, isOpen, onClo
           <div className="p-4 border-t border-gray-200/50">
             <div className="text-xs text-gray-500 text-center space-y-1">
               <p className="font-medium">28ProAjuda v1.0</p>
-              <p>Powered by Groq AI</p>
+              <p>Powered by 28Web</p>
             </div>
           </div>
         </div>

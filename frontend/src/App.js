@@ -157,9 +157,11 @@ function App() {
             </button>
 
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">28</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="28ProAjuda Logo" 
+                className="h-12 w-auto rounded-xl shadow-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">28ProAjuda</h1>
                 <p className="text-sm text-gray-500">Sistema de Ajuda 28Pro ERP Cloud</p>
