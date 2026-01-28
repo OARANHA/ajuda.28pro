@@ -24,10 +24,7 @@ const ArticleList = ({ articles, loading, onSelectArticle, highlightQuery = '' }
   }
 
   const highlightText = (text, query) => {
-    if (!query) return text;
-    
-    const regex = new RegExp(`(${query.split(' ').join('|')})`, 'gi');
-    return text.replace(regex, `<mark class="bg-yellow-200 rounded px-1">$1</mark>`);
+    return text;
   };
 
   return (
